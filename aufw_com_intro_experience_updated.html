@@ -1,0 +1,1940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AUFW.com — The Best Gaming Site You'll Ever Need</title>
+
+  <!-- Futuristic Typography: Orbitron & Rajdhani -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ==========================================================================
+       1. DESIGN TOKENS & DYNAMIC CSS VARIABLES
+       ========================================================================== */
+    :root {
+      --bg-obsidian: #05050a;
+      --bg-deep: #090914;
+      --neon-cyan: #00f5ff;
+      --neon-violet: #8b5cf6;
+      --neon-magenta: #ff007f;
+      --text-primary: #f8fafc;
+      --text-muted: #94a3b8;
+
+      /* Dynamic state variables modified by Overdrive & Hyperjump */
+      --glow-mult: 1;
+      --grid-duration: 2.2s;
+      --eq-duration: 0.95s;
+      --glitch-duration: 5.5s;
+      --border-alpha: 0.32;
+    }
+
+    /* Overdrive Mode overrides: boosts neon intensity, grid velocity & pulse rates */
+    body.overdrive {
+      --glow-mult: 1.75;
+      --grid-duration: 0.65s;
+      --eq-duration: 0.38s;
+      --glitch-duration: 2.1s;
+      --border-alpha: 0.72;
+    }
+
+    /* Hyperjump Warp overrides: extreme speed surge when entering AUFW.com */
+    body.hyperjump {
+      --glow-mult: 2.4;
+      --grid-duration: 0.18s;
+    }
+
+    /* ==========================================================================
+       2. RESET & BASE VIEWPORT ARCHITECTURE
+       ========================================================================== */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-obsidian);
+      color: var(--text-primary);
+      font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Ambient deep-space nebula backdrop behind canvas */
+    .ambient-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(139, 92, 246, 0.14) 0%, transparent 52%),
+        radial-gradient(circle at 20% 78%, rgba(0, 245, 255, 0.09) 0%, transparent 45%),
+        radial-gradient(circle at 82% 76%, rgba(255, 0, 127, 0.09) 0%, transparent 45%),
+        linear-gradient(180deg, #040408 0%, #06060f 65%, #090614 100%);
+      transition: filter 0.6s ease;
+    }
+
+    body.overdrive .ambient-backdrop {
+      filter: saturate(1.45) brightness(1.15);
+    }
+
+    /* Multi-Layered HTML5 Canvas */
+    #fx-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      display: block;
+    }
+
+    /* ==========================================================================
+       3. 3D PERSPECTIVE SYNTHWAVE / CYBER-ARENA FLOOR GRID
+       ========================================================================== */
+    .arena-floor-wrapper {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 44vh;
+      z-index: 2;
+      pointer-events: none;
+      perspective: 360px;
+      overflow: hidden;
+      /* Soft fade into the obsidian horizon */
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.85) 38%, #000 100%);
+      mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.85) 38%, #000 100%);
+    }
+
+    /* Glowing Horizon Beam */
+    .horizon-glow {
+      position: fixed;
+      left: -10%;
+      right: -10%;
+      bottom: 33vh;
+      height: 2px;
+      z-index: 2;
+      pointer-events: none;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(0, 245, 255, 0.35) 20%,
+        rgba(139, 92, 246, 0.85) 50%,
+        rgba(255, 0, 127, 0.35) 80%,
+        transparent 100%
+      );
+      box-shadow:
+        0 0 calc(18px * var(--glow-mult)) rgba(0, 245, 255, 0.6),
+        0 0 calc(36px * var(--glow-mult)) rgba(139, 92, 246, 0.5);
+      opacity: 0.65;
+      transition: opacity 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    body.overdrive .horizon-glow {
+      opacity: 1;
+    }
+
+    /* 3D Tilted Infinite Grid Plane */
+    .arena-grid-plane {
+      position: absolute;
+      left: -50%;
+      right: -50%;
+      top: -20%;
+      bottom: -35%;
+      transform-origin: 50% 0%;
+      transform: rotateX(76deg);
+      background-image:
+        linear-gradient(to right, rgba(0, 245, 255, 0.34) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(139, 92, 246, 0.38) 1px, transparent 1px);
+      background-size: 56px 56px;
+      animation: gridScroll var(--grid-duration) linear infinite;
+      will-change: background-position;
+    }
+
+    body.overdrive .arena-grid-plane {
+      background-image:
+        linear-gradient(to right, rgba(0, 245, 255, 0.55) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 0, 127, 0.55) 1px, transparent 1px);
+    }
+
+    @keyframes gridScroll {
+      0% {
+        background-position: 0 0;
+      }
+      100% {
+        background-position: 0 56px;
+      }
+    }
+
+    /* Subtle CRT Scanline & Vignette Overlay */
+    .scanlines-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at center, transparent 58%, rgba(2, 2, 6, 0.78) 100%),
+        repeating-linear-gradient(
+          0deg,
+          rgba(255, 255, 255, 0.015) 0px,
+          rgba(255, 255, 255, 0.015) 1px,
+          transparent 1px,
+          transparent 3px
+        );
+    }
+
+    /* ==========================================================================
+       4. TACTICAL CORNER HUD TELEMETRY & AUDIO VISUALIZER BARS
+       ========================================================================== */
+    .hud-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      padding: clamp(12px, 2.4vw, 26px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: opacity 0.45s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    body.hyperjump .hud-layer {
+      opacity: 0;
+      transform: scale(1.12);
+    }
+
+    .hud-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .hud-box {
+      background: rgba(8, 10, 20, 0.55);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 245, 255, var(--border-alpha));
+      border-radius: 10px;
+      padding: 8px 14px;
+      box-shadow: 0 0 20px rgba(0, 245, 255, 0.08);
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(-14px);
+      animation: hudSlideIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .hud-box.right {
+      animation-delay: 0.12s;
+      border-color: rgba(139, 92, 246, var(--border-alpha));
+    }
+
+    @keyframes hudSlideIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .hud-label-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(0.62rem, 1.1vw, 0.74rem);
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--neon-cyan);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--neon-cyan);
+      box-shadow: 0 0 10px var(--neon-cyan);
+      animation: pulseDot 1.2s ease-in-out infinite;
+    }
+
+    body.overdrive .status-dot {
+      background: var(--neon-magenta);
+      box-shadow: 0 0 14px var(--neon-magenta);
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.45); opacity: 0.55; }
+    }
+
+    .hud-subtext {
+      margin-top: 3px;
+      font-size: clamp(0.68rem, 1.15vw, 0.8rem);
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Boot Progress Bar inside Top-Left HUD */
+    .boot-bar-track {
+      margin-top: 6px;
+      width: 100%;
+      min-width: 150px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .boot-bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-violet), var(--neon-magenta));
+      box-shadow: 0 0 10px var(--neon-cyan);
+      transition: width 0.25s ease-out;
+    }
+
+    /* Top-Right Telemetry & CSS Audio-Visualizer Bars */
+    .telemetry-flex {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .telemetry-metrics {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .fps-badge {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(0.65rem, 1.1vw, 0.76rem);
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      color: #38bdf8;
+    }
+
+    .coords-readout {
+      font-size: clamp(0.66rem, 1.1vw, 0.78rem);
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Audio-Visualizer-Style Animated CSS Bars */
+    .visualizer-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 26px;
+      padding: 2px 0;
+    }
+
+    .viz-bar {
+      width: 3px;
+      height: 24%;
+      border-radius: 99px;
+      background: linear-gradient(to top, var(--neon-cyan), var(--neon-magenta));
+      box-shadow: 0 0 8px rgba(0, 245, 255, 0.5);
+      animation: eqBounce var(--eq-duration) ease-in-out infinite alternate;
+      animation-delay: calc(var(--b) * -0.11s);
+    }
+
+    @keyframes eqBounce {
+      0% { height: 18%; opacity: 0.55; }
+      45% { height: 92%; opacity: 1; }
+      75% { height: 42%; opacity: 0.75; }
+      100% { height: 100%; opacity: 1; }
+    }
+
+    /* ==========================================================================
+       5. CENTERPIECE STAGE: GLITCH TITLE, TAGLINE, 3D PILLS & MAGNETIC CTA
+       ========================================================================== */
+    .stage-container {
+      position: relative;
+      z-index: 4;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 72px 18px 86px;
+      text-align: center;
+      transition: transform 0.75s cubic-bezier(0.7, 0, 0.2, 1), opacity 0.65s ease, filter 0.65s ease;
+    }
+
+    body.hyperjump .stage-container {
+      transform: scale(2.4) translateZ(200px);
+      opacity: 0;
+      filter: blur(10px);
+      pointer-events: none;
+    }
+
+    /* Pre-Title Eyebrow Tag */
+    .eyebrow-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 5px 16px;
+      margin-bottom: clamp(10px, 2vh, 18px);
+      border-radius: 999px;
+      background: rgba(139, 92, 246, 0.14);
+      border: 1px solid rgba(139, 92, 246, 0.45);
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(0.62rem, 1.25vw, 0.78rem);
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      color: #e2e8f0;
+      text-transform: uppercase;
+      box-shadow: 0 0 22px rgba(139, 92, 246, 0.25);
+      opacity: 0;
+      transform: translateY(14px) scale(0.94);
+    }
+
+    .stage-container.is-playing .eyebrow-pill {
+      animation: fadeUpPop 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
+    }
+
+    .eyebrow-spark {
+      width: 14px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--neon-cyan));
+    }
+
+    .eyebrow-spark.right {
+      background: linear-gradient(90deg, var(--neon-magenta), transparent);
+    }
+
+    /* Giant Centerpiece AUFW.com Logo with 3D Perspective & Glitch Layers */
+    .logo-wrapper {
+      position: relative;
+      perspective: 900px;
+      margin-bottom: clamp(10px, 1.8vh, 16px);
+      padding: 4px 12px;
+    }
+
+    .hero-logo {
+      position: relative;
+      display: inline-flex;
+      align-items: baseline;
+      justify-content: center;
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(2.85rem, 10.5vw, 7.6rem);
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      line-height: 1.02;
+      color: #ffffff;
+      text-shadow:
+        0 0 calc(16px * var(--glow-mult)) rgba(0, 245, 255, 0.72),
+        0 0 calc(42px * var(--glow-mult)) rgba(139, 92, 246, 0.58),
+        0 0 calc(76px * var(--glow-mult)) rgba(255, 0, 127, 0.35);
+      transform-style: preserve-3d;
+    }
+
+    /* Staggered 3D Letter Drop */
+    .hero-logo .char {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(-85px) translateZ(130px) rotateX(68deg) scale(1.3);
+      filter: blur(8px);
+      background: linear-gradient(
+        180deg,
+        #ffffff 15%,
+        #d8f8ff 52%,
+        #7dd3fc 82%,
+        #c084fc 100%
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      will-change: transform, opacity, filter;
+    }
+
+    /* Distinct Neon Accent on .com */
+    .hero-logo .char.domain {
+      font-size: 0.62em;
+      background: linear-gradient(180deg, #ff7eb9 0%, #ff007f 55%, #8b5cf6 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .stage-container.is-playing .hero-logo .char {
+      animation: letterDrop3D 0.78s cubic-bezier(0.16, 1.32, 0.3, 1) forwards;
+      animation-delay: calc(0.25s + var(--i) * 0.065s);
+    }
+
+    @keyframes letterDrop3D {
+      0% {
+        opacity: 0;
+        transform: translateY(-85px) translateZ(130px) rotateX(68deg) scale(1.3);
+        filter: blur(8px);
+      }
+      65% {
+        opacity: 1;
+        filter: blur(0px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) translateZ(0) rotateX(0deg) scale(1);
+        filter: blur(0px);
+      }
+    }
+
+    /* Diagonal Holographic Shimmer Sweep across Logo */
+    .logo-shimmer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      border-radius: 12px;
+      opacity: 0;
+    }
+
+    .stage-container.is-playing .logo-shimmer {
+      animation: fadeInSimple 0.4s ease 1.05s forwards;
+    }
+
+    .logo-shimmer::after {
+      content: '';
+      position: absolute;
+      top: -30%;
+      left: -60%;
+      width: 45%;
+      height: 160%;
+      background: linear-gradient(
+        115deg,
+        transparent 20%,
+        rgba(255, 255, 255, 0.42) 48%,
+        rgba(0, 245, 255, 0.55) 52%,
+        transparent 80%
+      );
+      transform: skewX(-22deg);
+      mix-blend-mode: screen;
+      animation: holoSweep 3.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    @keyframes holoSweep {
+      0%, 28% { left: -65%; }
+      58%, 100% { left: 135%; }
+    }
+
+    /* Periodic RGB Chromatic-Aberration Glitch Layers */
+    .glitch-clone {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(2.85rem, 10.5vw, 7.6rem);
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      line-height: 1.02;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .glitch-clone span.domain {
+      font-size: 0.62em;
+    }
+
+    .stage-container.is-playing .glitch-clone.cyan {
+      color: var(--neon-cyan);
+      text-shadow: -3px 0 var(--neon-cyan);
+      animation: glitchBurstCyan var(--glitch-duration) steps(1, end) infinite;
+      animation-delay: 1.2s;
+    }
+
+    .stage-container.is-playing .glitch-clone.magenta {
+      color: var(--neon-magenta);
+      text-shadow: 3px 0 var(--neon-magenta);
+      animation: glitchBurstMagenta var(--glitch-duration) steps(1, end) infinite;
+      animation-delay: 1.2s;
+    }
+
+    @keyframes glitchBurstCyan {
+      0%, 91%, 100% { opacity: 0; transform: translate(0, 0); clip-path: inset(0 0 0 0); }
+      92% { opacity: 0.85; transform: translate(-6px, -2px); clip-path: inset(12% 0 58% 0); }
+      93.5% { opacity: 0.9; transform: translate(5px, 2px); clip-path: inset(62% 0 14% 0); }
+      95% { opacity: 0.75; transform: translate(-4px, 1px); clip-path: inset(34% 0 38% 0); }
+      96.5% { opacity: 0; transform: translate(0, 0); }
+    }
+
+    @keyframes glitchBurstMagenta {
+      0%, 91%, 100% { opacity: 0; transform: translate(0, 0); clip-path: inset(0 0 0 0); }
+      92.3% { opacity: 0.85; transform: translate(6px, 2px); clip-path: inset(54% 0 18% 0); }
+      93.8% { opacity: 0.9; transform: translate(-5px, -2px); clip-path: inset(16% 0 64% 0); }
+      95.2% { opacity: 0.75; transform: translate(4px, -1px); clip-path: inset(40% 0 32% 0); }
+      96.8% { opacity: 0; transform: translate(0, 0); }
+    }
+
+    /* Tagline & Animated Glowing Energy Underline */
+    .tagline-block {
+      position: relative;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: clamp(22px, 3.8vh, 36px);
+      opacity: 0;
+      transform: translateY(16px);
+    }
+
+    .stage-container.is-playing .tagline-block {
+      animation: fadeUpPop 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.88s forwards;
+    }
+
+    .hero-tagline {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(1.12rem, 2.8vw, 1.85rem);
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #e2e8f0;
+      text-shadow: 0 0 18px rgba(0, 245, 255, 0.35);
+      padding-bottom: 10px;
+    }
+
+    .energy-underline-track {
+      position: relative;
+      width: 100%;
+      height: 3px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.08);
+      overflow: visible;
+    }
+
+    .energy-underline-beam {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      height: 100%;
+      width: 0%;
+      transform: translateX(-50%);
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-violet), var(--neon-magenta));
+      box-shadow:
+        0 0 calc(12px * var(--glow-mult)) var(--neon-cyan),
+        0 0 calc(22px * var(--glow-mult)) var(--neon-magenta);
+    }
+
+    .stage-container.is-playing .energy-underline-beam {
+      animation: expandEnergyLine 0.85s cubic-bezier(0.22, 1, 0.36, 1) 1.05s forwards;
+    }
+
+    @keyframes expandEnergyLine {
+      to {
+        width: 100%;
+      }
+    }
+
+    /* Traveling spark node gliding along the tagline underline */
+    .energy-spark-node {
+      position: absolute;
+      top: 50%;
+      left: 0%;
+      width: 18px;
+      height: 5px;
+      border-radius: 99px;
+      background: #ffffff;
+      box-shadow: 0 0 14px #fff, 0 0 24px var(--neon-cyan);
+      transform: translate(-50%, -50%);
+      opacity: 0;
+    }
+
+    .stage-container.is-playing .energy-spark-node {
+      animation: glideSpark 2.8s ease-in-out 1.6s infinite;
+    }
+
+    @keyframes glideSpark {
+      0% { left: 2%; opacity: 0; }
+      15% { opacity: 1; }
+      85% { opacity: 1; }
+      100% { left: 98%; opacity: 0; }
+    }
+
+    /* ==========================================================================
+       6. INTERACTIVE 3D TILT GLASSMORPHIC FEATURE PILLS
+       ========================================================================== */
+    .feature-pills-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: clamp(10px, 1.8vw, 18px);
+      margin-bottom: clamp(26px, 4.4vh, 42px);
+      max-width: 820px;
+      width: 100%;
+    }
+
+    .tilt-pill {
+      --rx: 0deg;
+      --ry: 0deg;
+      --mx: 50%;
+      --my: 50%;
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 20px;
+      border-radius: 14px;
+      background: rgba(13, 16, 32, 0.62);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow:
+        0 10px 28px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(0.7rem, 1.25vw, 0.84rem);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: #f1f5f9;
+      cursor: pointer;
+      transform-style: preserve-3d;
+      transform: perspective(750px) rotateX(var(--rx)) rotateY(var(--ry));
+      transition: transform 0.14s ease-out, border-color 0.25s ease, box-shadow 0.25s ease;
+      overflow: hidden;
+      opacity: 0;
+    }
+
+    .stage-container.is-playing .tilt-pill:nth-child(1) {
+      animation: pillEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 1.15s forwards;
+    }
+    .stage-container.is-playing .tilt-pill:nth-child(2) {
+      animation: pillEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 1.27s forwards;
+    }
+    .stage-container.is-playing .tilt-pill:nth-child(3) {
+      animation: pillEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 1.39s forwards;
+    }
+
+    @keyframes pillEntrance {
+      0% {
+        opacity: 0;
+        transform: perspective(750px) translateY(22px) scale(0.92);
+      }
+      100% {
+        opacity: 1;
+        transform: perspective(750px) rotateX(var(--rx)) rotateY(var(--ry)) translateY(0) scale(1);
+      }
+    }
+
+    /* Dynamic Moving Specular Light Reflection on Tilt Hover */
+    .tilt-pill::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        circle 95px at var(--mx) var(--my),
+        rgba(0, 245, 255, 0.32),
+        rgba(139, 92, 246, 0.12) 45%,
+        transparent 75%
+      );
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      pointer-events: none;
+    }
+
+    .tilt-pill:hover::before {
+      opacity: 1;
+    }
+
+    .tilt-pill:hover {
+      border-color: rgba(0, 245, 255, 0.65);
+      box-shadow:
+        0 14px 34px rgba(0, 245, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+
+    .pill-icon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 6px currentColor);
+    }
+
+    .pill-icon.cyan { color: var(--neon-cyan); }
+    .pill-icon.violet { color: var(--neon-violet); }
+    .pill-icon.magenta { color: var(--neon-magenta); }
+
+    /* ==========================================================================
+       7. MAGNETIC GLOWING CTA BUTTON ("ENTER AUFW.COM")
+       ========================================================================== */
+    .magnetic-zone {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .stage-container.is-playing .magnetic-zone {
+      animation: fadeUpPop 0.7s cubic-bezier(0.16, 1, 0.3, 1) 1.48s forwards;
+    }
+
+    .cta-magnetic-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 38px;
+      border: none;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #00f5ff 0%, #8b5cf6 52%, #ff007f 100%);
+      color: #ffffff;
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(0.95rem, 2vw, 1.18rem);
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow:
+        0 0 calc(26px * var(--glow-mult)) rgba(0, 245, 255, 0.5),
+        0 0 calc(48px * var(--glow-mult)) rgba(139, 92, 246, 0.42),
+        inset 0 1px 1px rgba(255, 255, 255, 0.55);
+      transition: box-shadow 0.3s ease, filter 0.3s ease;
+      overflow: hidden;
+      will-change: transform;
+    }
+
+    /* Inner dark obsidian core plate for ultra-crisp cyber contrast */
+    .cta-magnetic-btn::before {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(8, 12, 26, 0.86), rgba(18, 10, 34, 0.82));
+      z-index: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .cta-magnetic-btn:hover::before {
+      opacity: 0.42;
+    }
+
+    /* Sweeping specular highlight across CTA */
+    .cta-magnetic-btn::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -70%;
+      width: 45%;
+      height: 200%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+      transform: rotate(25deg);
+      z-index: 1;
+      animation: ctaShine 3.2s ease-in-out infinite;
+    }
+
+    @keyframes ctaShine {
+      0%, 35% { left: -70%; }
+      65%, 100% { left: 140%; }
+    }
+
+    .cta-magnetic-btn:hover {
+      box-shadow:
+        0 0 36px rgba(0, 245, 255, 0.85),
+        0 0 68px rgba(255, 0, 127, 0.65),
+        inset 0 1px 2px rgba(255, 255, 255, 0.85);
+    }
+
+    .cta-content {
+      position: relative;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.65);
+    }
+
+    .cta-arrow {
+      width: 20px;
+      height: 20px;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .cta-magnetic-btn:hover .cta-arrow {
+      transform: translateX(5px);
+    }
+
+    /* ==========================================================================
+       8. FLOATING BOTTOM CONTROL BAR (REPLAY INTRO & OVERDRIVE MODE)
+       ========================================================================== */
+    .floating-controls {
+      position: fixed;
+      bottom: clamp(14px, 2.5vh, 24px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(8, 10, 22, 0.72);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.65);
+      max-width: calc(100vw - 24px);
+      transition: opacity 0.4s ease;
+    }
+
+    body.hyperjump .floating-controls {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .ctrl-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.05);
+      color: #e2e8f0;
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(0.64rem, 1.15vw, 0.75rem);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.22s ease;
+    }
+
+    .ctrl-btn:hover {
+      background: rgba(0, 245, 255, 0.14);
+      border-color: rgba(0, 245, 255, 0.55);
+      color: #ffffff;
+      box-shadow: 0 0 16px rgba(0, 245, 255, 0.25);
+    }
+
+    .ctrl-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Overdrive Active Styling */
+    .ctrl-btn.overdrive-active {
+      background: linear-gradient(90deg, rgba(255, 0, 127, 0.28), rgba(139, 92, 246, 0.32));
+      border-color: var(--neon-magenta);
+      color: #ffffff;
+      box-shadow: 0 0 22px rgba(255, 0, 127, 0.45);
+    }
+
+    .od-indicator {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #64748b;
+      transition: background 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .ctrl-btn.overdrive-active .od-indicator {
+      background: var(--neon-magenta);
+      box-shadow: 0 0 10px var(--neon-magenta);
+    }
+
+    .ctrl-hint {
+      display: none;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      padding: 0 8px;
+      white-space: nowrap;
+    }
+
+    @media (min-width: 768px) {
+      .ctrl-hint {
+        display: inline-block;
+      }
+    }
+
+    /* ==========================================================================
+       9. HYPERJUMP PORTAL REVEAL OVERLAY (AFTER ENTERING AUFW.COM)
+       ========================================================================== */
+    .portal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: radial-gradient(circle at center, rgba(13, 18, 38, 0.86) 0%, rgba(5, 5, 10, 0.96) 100%);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.55s ease;
+    }
+
+    .portal-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .portal-card {
+      max-width: 560px;
+      width: 100%;
+      padding: clamp(24px, 4vw, 38px);
+      border-radius: 22px;
+      background: rgba(12, 15, 30, 0.85);
+      border: 1px solid rgba(0, 245, 255, 0.45);
+      box-shadow:
+        0 0 50px rgba(0, 245, 255, 0.2),
+        0 0 90px rgba(139, 92, 246, 0.2);
+      text-align: center;
+      transform: scale(0.9) translateY(20px);
+      transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .portal-overlay.visible .portal-card {
+      transform: scale(1) translateY(0);
+    }
+
+    .portal-badge {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 99px;
+      background: rgba(0, 245, 255, 0.14);
+      border: 1px solid rgba(0, 245, 255, 0.4);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      color: var(--neon-cyan);
+      margin-bottom: 14px;
+    }
+
+    .portal-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.5rem, 4vw, 2.25rem);
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #ffffff, var(--neon-cyan), var(--neon-magenta));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .portal-desc {
+      font-size: 1.05rem;
+      line-height: 1.5;
+      color: #cbd5e1;
+      margin-bottom: 24px;
+    }
+
+    .portal-genres {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .genre-chip {
+      padding: 11px 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #f8fafc;
+    }
+
+    /* ==========================================================================
+       10. UTILITY KEYFRAMES & RESPONSIVE TUNING
+       ========================================================================== */
+    @keyframes fadeUpPop {
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes fadeInSimple {
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* Screen micro-shake when shockwave bursts fire */
+    @keyframes microShake {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(-3px, 2px); }
+      50% { transform: translate(3px, -2px); }
+      75% { transform: translate(-2px, -1px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    .shake-active {
+      animation: microShake 0.24s ease-out;
+    }
+
+    @media (max-width: 480px) {
+      .hud-box {
+        padding: 6px 10px;
+      }
+      .boot-bar-track {
+        min-width: 105px;
+      }
+      .visualizer-bars {
+        height: 20px;
+        gap: 2px;
+      }
+      .tilt-pill {
+        padding: 9px 14px;
+        gap: 7px;
+      }
+      .cta-magnetic-btn {
+        padding: 15px 26px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Ambient Deep-Space Backdrop -->
+  <div class="ambient-backdrop"></div>
+
+  <!-- Multi-Layered HTML5 Canvas (3D Starfield, Neon Constellation, Click Shockwaves) -->
+  <canvas id="fx-canvas"></canvas>
+
+  <!-- 3D Perspective Cyber-Arena Floor Grid -->
+  <div class="horizon-glow"></div>
+  <div class="arena-floor-wrapper">
+    <div class="arena-grid-plane"></div>
+  </div>
+
+  <!-- Subtle CRT Scanlines & Vignette -->
+  <div class="scanlines-overlay"></div>
+
+  <!-- Tactical HUD Layer -->
+  <header class="hud-layer" aria-hidden="true">
+    <div class="hud-top-row">
+      <!-- Top-Left Boot Telemetry -->
+      <div class="hud-box left">
+        <div class="hud-label-row">
+          <span class="status-dot"></span>
+          <span id="hud-boot-title">SYS.BOOT // AUFW-OS</span>
+        </div>
+        <div class="hud-subtext" id="hud-boot-status">INITIALIZING SHADERS...</div>
+        <div class="boot-bar-track">
+          <div class="boot-bar-fill" id="boot-bar-fill"></div>
+        </div>
+      </div>
+
+      <!-- Top-Right FPS, Dynamic Coordinates & CSS Visualizer Bars -->
+      <div class="hud-box right">
+        <div class="telemetry-flex">
+          <div class="telemetry-metrics">
+            <div class="fps-badge" id="fps-counter">60 FPS // SYNC</div>
+            <div class="coords-readout" id="coords-readout">X: 0000 // Y: 0000</div>
+          </div>
+          <div class="visualizer-bars">
+            <span class="viz-bar" style="--b: 1"></span>
+            <span class="viz-bar" style="--b: 4"></span>
+            <span class="viz-bar" style="--b: 7"></span>
+            <span class="viz-bar" style="--b: 2"></span>
+            <span class="viz-bar" style="--b: 9"></span>
+            <span class="viz-bar" style="--b: 5"></span>
+            <span class="viz-bar" style="--b: 11"></span>
+            <span class="viz-bar" style="--b: 3"></span>
+            <span class="viz-bar" style="--b: 8"></span>
+            <span class="viz-bar" style="--b: 6"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Centerpiece Intro Stage -->
+  <main class="stage-container is-playing" id="stage-container">
+    <!-- Eyebrow Badge -->
+    <div class="eyebrow-pill">
+      <span class="eyebrow-spark"></span>
+      <span>NEXT-GEN GAMING PORTAL</span>
+      <span class="eyebrow-spark right"></span>
+    </div>
+
+    <!-- Giant Kinetic Glitch Title: AUFW.com -->
+    <div class="logo-wrapper">
+      <h1 class="hero-logo" id="hero-logo" aria-label="AUFW.com">
+        <span class="char" style="--i: 0">A</span>
+        <span class="char" style="--i: 1">U</span>
+        <span class="char" style="--i: 2">F</span>
+        <span class="char" style="--i: 3">W</span>
+        <span class="char domain" style="--i: 4">.</span>
+        <span class="char domain" style="--i: 5">c</span>
+        <span class="char domain" style="--i: 6">o</span>
+        <span class="char domain" style="--i: 7">m</span>
+      </h1>
+
+      <!-- Holographic Diagonal Shimmer -->
+      <div class="logo-shimmer" aria-hidden="true"></div>
+
+      <!-- RGB Chromatic-Aberration Glitch Clones -->
+      <div class="glitch-clone cyan" aria-hidden="true">
+        <span>AUFW</span><span class="domain">.com</span>
+      </div>
+      <div class="glitch-clone magenta" aria-hidden="true">
+        <span>AUFW</span><span class="domain">.com</span>
+      </div>
+    </div>
+
+    <!-- Tagline & Animated Glowing Energy Underline -->
+    <div class="tagline-block">
+      <p class="hero-tagline">The Best Gaming Site You'll Ever Need</p>
+      <div class="energy-underline-track">
+        <div class="energy-underline-beam"></div>
+        <div class="energy-spark-node"></div>
+      </div>
+    </div>
+
+    <!-- Interactive 3D Tilt Glassmorphic Feature Pills -->
+    <div class="feature-pills-row" id="feature-pills">
+      <div class="tilt-pill" data-tilt>
+        <svg class="pill-icon cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+        <span>INSTANT ACCESS</span>
+      </div>
+
+      <div class="tilt-pill" data-tilt>
+        <svg class="pill-icon violet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="6" width="20" height="12" rx="4"></rect>
+          <path d="M6 12h4"></path>
+          <path d="M8 10v4"></path>
+          <circle cx="15" cy="11" r="1" fill="currentColor"></circle>
+          <circle cx="18" cy="13" r="1" fill="currentColor"></circle>
+        </svg>
+        <span>1000+ TITLES</span>
+      </div>
+
+      <div class="tilt-pill" data-tilt>
+        <svg class="pill-icon magenta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+        <span>ULTRA SMOOTH</span>
+      </div>
+    </div>
+
+    <!-- Magnetic Glowing CTA -->
+    <div class="magnetic-zone" id="magnetic-zone">
+      <button type="button" class="cta-magnetic-btn" id="enter-cta-btn">
+        <span class="cta-content">
+          <span>ENTER AUFW.COM</span>
+          <svg class="cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </span>
+      </button>
+    </div>
+  </main>
+
+  <!-- Floating Control Bar -->
+  <nav class="floating-controls" aria-label="Intro Animation Controls">
+    <button type="button" class="ctrl-btn" id="replay-btn" title="Replay Kinetic Intro">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="1 4 1 10 7 10"></polyline>
+        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+      </svg>
+      <span>Replay Intro</span>
+    </button>
+
+    <button type="button" class="ctrl-btn" id="overdrive-btn" aria-pressed="false" title="Toggle Overdrive Intensity">
+      <span class="od-indicator"></span>
+      <span>Overdrive Mode</span>
+    </button>
+
+    <span class="ctrl-hint">CLICK ANYWHERE FOR SHOCKWAVE</span>
+  </nav>
+
+  <!-- Post-Hyperjump Portal Arrival Card -->
+  <section class="portal-overlay" id="portal-overlay" aria-live="polite">
+    <div class="portal-card">
+      <div class="portal-badge">WARP COMPLETE // PORTAL ONLINE</div>
+      <h2 class="portal-title">WELCOME TO AUFW.COM</h2>
+      <p class="portal-desc">
+        All systems unlocked at maximum frame rate. Select a sector below or return to the kinetic intro stage.
+      </p>
+      <div class="portal-genres">
+        <div class="genre-chip">⚡ CYBER ACTION</div>
+        <div class="genre-chip">🏎️ NEON RACING</div>
+        <div class="genre-chip">👾 RETRO ARCADE</div>
+        <div class="genre-chip">🌐 ARENA MULTIPLAYER</div>
+      </div>
+      <button type="button" class="ctrl-btn overdrive-active" id="return-intro-btn" style="margin: 0 auto; padding: 12px 24px;">
+        <span>↺ RE-ENTER INTRO STAGE</span>
+      </button>
+    </div>
+  </section>
+
+  <script>
+    /**
+     * ==========================================================================
+     * AUFW.COM CINEMATIC INTRO ENGINE
+     * Multi-layered HTML5 Canvas (3D Starfield + Neon Constellation + Shockwaves),
+     * HUD Telemetry, 3D Tilt Cards, Magnetic CTA, Overdrive & Hyperjump Controller.
+     * ==========================================================================
+     */
+    (function () {
+      'use strict';
+
+      // Neon Palette Constants
+      const NEON_COLORS = ['#00f5ff', '#8b5cf6', '#ff007f'];
+
+      // DOM References
+      const canvas = document.getElementById('fx-canvas');
+      const ctx = canvas.getContext('2d', { alpha: true });
+      const stageContainer = document.getElementById('stage-container');
+      const bootTitleEl = document.getElementById('hud-boot-title');
+      const bootStatusEl = document.getElementById('hud-boot-status');
+      const bootBarEl = document.getElementById('boot-bar-fill');
+      const fpsCounterEl = document.getElementById('fps-counter');
+      const coordsReadoutEl = document.getElementById('coords-readout');
+      const replayBtn = document.getElementById('replay-btn');
+      const overdriveBtn = document.getElementById('overdrive-btn');
+      const enterCtaBtn = document.getElementById('enter-cta-btn');
+      const magneticZone = document.getElementById('magnetic-zone');
+      const portalOverlay = document.getElementById('portal-overlay');
+      const returnIntroBtn = document.getElementById('return-intro-btn');
+      const tiltPills = document.querySelectorAll('[data-tilt]');
+
+      // Global Simulation State
+      const state = {
+        width: window.innerWidth,
+        height: window.innerHeight,
+        dpr: Math.min(window.devicePixelRatio || 1, 2),
+        overdrive: false,
+        hyperjump: false,
+        warpFactor: 1, // Smoothly interpolated speed multiplier
+        pointer: {
+          x: window.innerWidth * 0.5,
+          y: window.innerHeight * 0.5,
+          active: false
+        },
+        magnetic: {
+          currentX: 0,
+          currentY: 0,
+          targetX: 0,
+          targetY: 0
+        }
+      };
+
+      // Entity Pools
+      let stars = [];
+      let particles = [];
+      let shockwaves = [];
+      let sparks = [];
+
+      /**
+       * ------------------------------------------------------------------------
+       * 1. RESPONSIVE HIGH-DPI CANVAS RESIZING
+       * ------------------------------------------------------------------------
+       */
+      function resizeCanvas() {
+        try {
+          state.width = window.innerWidth;
+          state.height = window.innerHeight;
+          state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+          canvas.width = Math.floor(state.width * state.dpr);
+          canvas.height = Math.floor(state.height * state.dpr);
+          ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+
+          initEntities();
+        } catch (err) {
+          console.error('Canvas resize error:', err);
+        }
+      }
+
+      /**
+       * ------------------------------------------------------------------------
+       * 2. ENTITY INITIALIZATION (3D STARFIELD & CONSTELLATION NODES)
+       * ------------------------------------------------------------------------
+       */
+      function initEntities() {
+        const area = state.width * state.height;
+        const starCount = Math.min(280, Math.max(110, Math.floor(area / 6200)));
+        const particleCount = Math.min(125, Math.max(48, Math.floor(area / 13500)));
+
+        // 3D Perspective Stars
+        stars = [];
+        for (let i = 0; i < starCount; i++) {
+          stars.push(createStar(true));
+        }
+
+        // Interactive Neon Constellation Particles
+        particles = [];
+        for (let i = 0; i < particleCount; i++) {
+          const color = NEON_COLORS[i % NEON_COLORS.length];
+          particles.push({
+            x: Math.random() * state.width,
+            y: Math.random() * state.height,
+            vx: (Math.random() - 0.5) * 1.15,
+            vy: (Math.random() - 0.5) * 1.15,
+            radius: Math.random() * 2.1 + 1.2,
+            color: color,
+            phase: Math.random() * Math.PI * 2
+          });
+        }
+      }
+
+      function createStar(randomZ) {
+        const spread = Math.max(state.width, state.height) * 1.3;
+        return {
+          x: (Math.random() - 0.5) * spread,
+          y: (Math.random() - 0.5) * spread,
+          z: randomZ ? Math.random() * 1200 + 40 : 1200,
+          pz: 1200,
+          color: Math.random() < 0.65 ? '#ffffff' : NEON_COLORS[Math.floor(Math.random() * NEON_COLORS.length)],
+          size: Math.random() * 1.5 + 0.6
+        };
+      }
+
+      /**
+       * ------------------------------------------------------------------------
+       * 3. CLICK-ANYWHERE PLASMA SHOCKWAVES & SPARK EXPLOSIONS
+       * ------------------------------------------------------------------------
+       */
+      function spawnShockwaveBurst(x, y, intensity = 1) {
+        // Primary Cyan & Secondary Magenta Expanding Rings
+        shockwaves.push({
+          x,
+          y,
+          radius: 6,
+          maxRadius: (165 + Math.random() * 55) * intensity,
+          speed: 7.5 * intensity,
+          color: '#00f5ff',
+          alpha: 0.95,
+          lineWidth: 3.2
+        });
+
+        shockwaves.push({
+          x,
+          y,
+          radius: 2,
+          maxRadius: (115 + Math.random() * 40) * intensity,
+          speed: 5.4 * intensity,
+          color: '#ff007f',
+          alpha: 0.85,
+          lineWidth: 2.2
+        });
+
+        // Sparkling Particle Explosion
+        const sparkCount = Math.floor(26 * intensity);
+        for (let i = 0; i < sparkCount; i++) {
+          const angle = (Math.PI * 2 * i) / sparkCount + (Math.random() - 0.5) * 0.35;
+          const speed = (Math.random() * 5.8 + 2.2) * intensity;
+          sparks.push({
+            x,
+            y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 1,
+            decay: Math.random() * 0.024 + 0.018,
+            size: Math.random() * 2.4 + 1.1,
+            color: NEON_COLORS[Math.floor(Math.random() * NEON_COLORS.length)]
+          });
+        }
+
+        // Subtle tactile screen micro-shake
+        document.body.classList.remove('shake-active');
+        void document.body.offsetWidth;
+        document.body.classList.add('shake-active');
+      }
+
+      /**
+       * ------------------------------------------------------------------------
+       * 4. CANVAS RENDERING LAYERS
+       * ------------------------------------------------------------------------
+       */
+      function updateAndDrawStars() {
+        const cx = state.width * 0.5;
+        const cy = state.height * 0.44;
+        const focal = 340;
+        const baseSpeed = 4.2 * state.warpFactor;
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+
+        for (let i = 0; i < stars.length; i++) {
+          const s = stars[i];
+          s.pz = s.z;
+          s.z -= baseSpeed;
+
+          if (s.z <= 8) {
+            Object.assign(s, createStar(false));
+            s.pz = s.z;
+            continue;
+          }
+
+          const sx = cx + (s.x / s.z) * focal;
+          const sy = cy + (s.y / s.z) * focal;
+
+          // Previous projected position creates hyperspace warp streaks
+          const streakOffset = state.warpFactor > 1.4 ? baseSpeed * 2.6 : baseSpeed * 1.15;
+          const prevZ = Math.min(1200, s.z + streakOffset);
+          const px = cx + (s.x / prevZ) * focal;
+          const py = cy + (s.y / prevZ) * focal;
+
+          // Cull offscreen stars
+          if (sx < -60 || sx > state.width + 60 || sy < -60 || sy > state.height + 60) {
+            Object.assign(s, createStar(false));
+            continue;
+          }
+
+          const depthAlpha = Math.min(1, (1 - s.z / 1200) * 1.35);
+          const lineWidth = Math.max(0.7, (1 - s.z / 1200) * s.size * (state.warpFactor > 2 ? 2.1 : 1.3));
+
+          ctx.strokeStyle = s.color;
+          ctx.globalAlpha = depthAlpha * 0.85;
+          ctx.lineWidth = lineWidth;
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(sx, sy);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      function updateAndDrawConstellation(time) {
+        const speedMult = state.overdrive ? 2.25 : 1.0;
+        const connectDist = state.width < 600 ? 105 : state.overdrive ? 165 : 138;
+        const connectDistSq = connectDist * connectDist;
+        const cursorRadius = state.overdrive ? 195 : 155;
+        const cursorRadiusSq = cursorRadius * cursorRadius;
+
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+
+        // Update particle kinematics & cursor swirl/repel field
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+
+          // Gentle organic drift
+          p.x += p.vx * speedMult;
+          p.y += p.vy * speedMult;
+
+          // Cursor Swirl + Repel Force Field
+          if (state.pointer.active) {
+            const dx = p.x - state.pointer.x;
+            const dy = p.y - state.pointer.y;
+            const distSq = dx * dx + dy * dy;
+
+            if (distSq < cursorRadiusSq && distSq > 1) {
+              const dist = Math.sqrt(distSq);
+              const force = (1 - dist / cursorRadius);
+              const nx = dx / dist;
+              const ny = dy / dist;
+
+              // Radial repulsion + tangential vortex swirl
+              const repelStrength = force * (state.overdrive ? 4.8 : 3.2);
+              const swirlStrength = force * (state.overdrive ? 3.4 : 2.1);
+
+              p.x += nx * repelStrength - ny * swirlStrength;
+              p.y += ny * repelStrength + nx * swirlStrength;
+
+              // Draw energetic tether from cursor to nearby particles
+              ctx.strokeStyle = p.color;
+              ctx.globalAlpha = force * 0.42;
+              ctx.lineWidth = 1.1;
+              ctx.beginPath();
+              ctx.moveTo(state.pointer.x, state.pointer.y);
+              ctx.lineTo(p.x, p.y);
+              ctx.stroke();
+            }
+          }
+
+          // Wrap smoothly around viewport edges
+          if (p.x < -20) p.x = state.width + 20;
+          if (p.x > state.width + 20) p.x = -20;
+          if (p.y < -20) p.y = state.height + 20;
+          if (p.y > state.height + 20) p.y = -20;
+        }
+
+        // Draw Glowing Constellation Connections
+        for (let i = 0; i < particles.length; i++) {
+          const a = particles[i];
+          for (let j = i + 1; j < particles.length; j++) {
+            const b = particles[j];
+            const dx = a.x - b.x;
+            const dy = a.y - b.y;
+            const distSq = dx * dx + dy * dy;
+
+            if (distSq < connectDistSq) {
+              const alpha = (1 - Math.sqrt(distSq) / connectDist) * (state.overdrive ? 0.58 : 0.36);
+              ctx.strokeStyle = a.color;
+              ctx.globalAlpha = alpha;
+              ctx.lineWidth = state.overdrive ? 1.35 : 0.95;
+              ctx.beginPath();
+              ctx.moveTo(a.x, a.y);
+              ctx.lineTo(b.x, b.y);
+              ctx.stroke();
+            }
+          }
+        }
+
+        // Draw Glowing Particle Nodes
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          const pulse = 1 + Math.sin(time * 0.005 + p.phase) * 0.28;
+          const r = p.radius * pulse * (state.overdrive ? 1.25 : 1);
+
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = 0.9;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Soft outer neon halo
+          ctx.globalAlpha = state.overdrive ? 0.26 : 0.14;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, r * 3.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Ambient Cursor Aura Ring
+        if (state.pointer.active) {
+          const grad = ctx.createRadialGradient(
+            state.pointer.x,
+            state.pointer.y,
+            2,
+            state.pointer.x,
+            state.pointer.y,
+            85
+          );
+          grad.addColorStop(0, 'rgba(0, 245, 255, 0.22)');
+          grad.addColorStop(0.55, 'rgba(139, 92, 246, 0.08)');
+          grad.addColorStop(1, 'transparent');
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(state.pointer.x, state.pointer.y, 85, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+
+      function updateAndDrawBursts() {
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+
+        // Expanding Shockwave Rings
+        for (let i = shockwaves.length - 1; i >= 0; i--) {
+          const sw = shockwaves[i];
+          sw.radius += sw.speed;
+          sw.alpha *= 0.935;
+          sw.lineWidth *= 0.97;
+
+          if (sw.radius >= sw.maxRadius || sw.alpha <= 0.02) {
+            shockwaves.splice(i, 1);
+            continue;
+          }
+
+          ctx.strokeStyle = sw.color;
+          ctx.globalAlpha = sw.alpha;
+          ctx.lineWidth = Math.max(0.5, sw.lineWidth);
+          ctx.beginPath();
+          ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Sparkling Explosion Particles
+        for (let i = sparks.length - 1; i >= 0; i--) {
+          const sp = sparks[i];
+          sp.x += sp.vx;
+          sp.y += sp.vy;
+          sp.vx *= 0.95;
+          sp.vy *= 0.95;
+          sp.life -= sp.decay;
+
+          if (sp.life <= 0) {
+            sparks.splice(i, 1);
+            continue;
+          }
+
+          ctx.strokeStyle = sp.color;
+          ctx.globalAlpha = sp.life;
+          ctx.lineWidth = sp.size;
+          ctx.beginPath();
+          ctx.moveTo(sp.x, sp.y);
+          ctx.lineTo(sp.x - sp.vx * 2.2, sp.y - sp.vy * 2.2);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      /**
+       * ------------------------------------------------------------------------
+       * 5. MAGNETIC CTA SPRING INTERPOLATION
+       * ------------------------------------------------------------------------
+       */
+      function updateMagneticCTA() {
+        state.magnetic.currentX += (state.magnetic.targetX - state.magnetic.currentX) * 0.16;
+        state.magnetic.currentY += (state.magnetic.targetY - state.magnetic.currentY) * 0.16;
+
+        enterCtaBtn.style.transform = `translate3d(${state.magnetic.currentX.toFixed(2)}px, ${state.magnetic.currentY.toFixed(2)}px, 0)`;
+      }
+
+      /**
+       * ------------------------------------------------------------------------
+       * 6. MAIN ANIMATION LOOP & LIVE FPS COUNTER
+       * ------------------------------------------------------------------------
+       */
+      let lastFrameTime = performance.now();
+      let fpsFrames = 0;
+      let fpsLastCheck = lastFrameTime;
+
+      function animateLoop(now) {
+        // FPS Telemetry calculation every 300ms
+        fpsFrames++;
+        if (now - fpsLastCheck >= 300) {
+          const currentFps = Math.min(144, Math.round((fpsFrames * 1000) / (now - fpsLastCheck)));
+          const modeTag = state.hyperjump ? 'WARP' : state.overdrive ? 'MAX' : 'SYNC';
+          fpsCounterEl.textContent = `${currentFps} FPS // ${modeTag}`;
+          fpsFrames = 0;
+          fpsLastCheck = now;
+        }
+
+        // Smooth warp speed interpolation
+        const targetWarp = state.hyperjump ? 16.5 : state.overdrive ? 3.4 : 1.0;
+        state.warpFactor += (targetWarp - state.warpFactor) * 0.06;
+
+        // Clear frame
+        ctx.clearRect(0, 0, state.width, state.height);
+
+        // Render Multi-Layered FX
+        updateAndDrawStars();
+        updateAndDrawConstellation(now);
+        updateAndDrawBursts();
+        updateMagneticCTA();
+
+        lastFrameTime = now;
+        requestAnimationFrame(animateLoop);
+      }
+
+      /**
+       * ------------------------------------------------------------------------
+       * 7. CINEMATIC BOOT SEQUENCE & REPLAY CONTROLLER
+       * ------------------------------------------------------------------------
+       */
+      let bootTimers = [];
+
+      function runBootSequence() {
+        // Clear any pending timers
+        bootTimers.forEach((id) => clearTimeout(id));
+        bootTimers = [];
+
+        // Reset stage animation class to re-trigger all CSS keyframe entrances
+        stageContainer.classList.remove('is-playing');
+        void stageContainer.offsetWidth;
+        stageContainer.classList.add('is-playing');
+
+        const steps = [
+          { delay: 0, pct: '18%', title: 'SYS.BOOT // AUFW-OS', status: 'LOADING NEON SHADERS...' },
+          { delay: 380, pct: '54%', title: 'SYS.BOOT // CONSTELLATION', status: 'LINKING PARTICLE MESH...' },
+          { delay: 820, pct: '86%', title: 'SYS.BOOT // ARENA GRID', status: 'CALIBRATING 3D HORIZON...' },
+          { delay: 1280, pct: '100%', title: 'AUFW.COM // ONLINE', status: 'READY FOR LAUNCH' }
+        ];
+
+        steps.forEach((step) => {
+          const t = setTimeout(() => {
+            bootBarEl.style.width = step.pct;
+            bootTitleEl.textContent = step.title;
+            bootStatusEl.textContent = step.status;
+          }, step.delay);
+          bootTimers.push(t);
+        });
+      }
+
+      /**
+       * ------------------------------------------------------------------------
+       * 8. INTERACTIVE 3D TILT GLASSMORPHIC PILLS
+       * ------------------------------------------------------------------------
+       */
+      tiltPills.forEach((pill) => {
+        function handleTiltMove(clientX, clientY) {
+          const rect = pill.getBoundingClientRect();
+          const relX = (clientX - rect.left) / rect.width;
+          const relY = (clientY - rect.top) / rect.height;
+
+          const rotateY = (relX - 0.5) * 24;
+          const rotateX = (0.5 - relY) * 24;
+
+          pill.style.setProperty('--rx', `${rotateX.toFixed(2)}deg`);
+          pill.style.setProperty('--ry', `${rotateY.toFixed(2)}deg`);
+          pill.style.setProperty('--mx', `${(relX * 100).toFixed(1)}%`);
+          pill.style.setProperty('--my', `${(relY * 100).toFixed(1)}%`);
+        }
+
+        pill.addEventListener('mousemove', (e) => {
+          handleTiltMove(e.clientX, e.clientY);
+        });
+
+        pill.addEventListener('mouseleave', () => {
+          pill.style.setProperty('--rx', '0deg');
+          pill.style.setProperty('--ry', '0deg');
+        });
+
+        pill.addEventListener('touchmove', (e) => {
+          if (e.touches && e.touches[0]) {
+            handleTiltMove(e.touches[0].clientX, e.touches[0].clientY);
+          }
+        }, { passive: true });
+
+        pill.addEventListener('touchend', () => {
+          pill.style.setProperty('--rx', '0deg');
+          pill.style.setProperty('--ry', '0deg');
+        });
+      });
+
+      /**
+       * ------------------------------------------------------------------------
+       * 9. POINTER TRACKING, MAGNETIC CTA & CLICK SHOCKWAVES
+       * ------------------------------------------------------------------------
+       */
+      function updatePointerCoords(x, y) {
+        state.pointer.x = x;
+        state.pointer.y = y;
+        state.pointer.active = true;
+
+        const padX = String(Math.round(x)).padStart(4, '0');
+        const padY = String(Math.round(y)).padStart(4, '0');
+        coordsReadoutEl.textContent = `X: ${padX} // Y: ${padY}`;
+
+        // Magnetic CTA Attraction calculation
+        const zoneRect = magneticZone.getBoundingClientRect();
+        const zoneCenterX = zoneRect.left + zoneRect.width * 0.5;
+        const zoneCenterY = zoneRect.top + zoneRect.height * 0.5;
+        const dx = x - zoneCenterX;
+        const dy = y - zoneCenterY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const magnetRadius = 135;
+
+        if (dist < magnetRadius) {
+          const pull = (1 - dist / magnetRadius) * 0.42;
+          state.magnetic.targetX = dx * pull;
+          state.magnetic.targetY = dy * pull;
+        } else {
+          state.magnetic.targetX = 0;
+          state.magnetic.targetY = 0;
+        }
+      }
+
+      window.addEventListener('mousemove', (e) => {
+        updatePointerCoords(e.clientX, e.clientY);
+      }, { passive: true });
+
+      window.addEventListener('mouseleave', () => {
+        state.pointer.active = false;
+        state.magnetic.targetX = 0;
+        state.magnetic.targetY = 0;
+      });
+
+      window.addEventListener('touchstart', (e) => {
+        if (e.touches && e.touches[0]) {
+          const t = e.touches[0];
+          updatePointerCoords(t.clientX, t.clientY);
+          if (!e.target.closest('button')) {
+            spawnShockwaveBurst(t.clientX, t.clientY, state.overdrive ? 1.3 : 1);
+          }
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        if (e.touches && e.touches[0]) {
+          updatePointerCoords(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchend', () => {
+        state.pointer.active = false;
+        state.magnetic.targetX = 0;
+        state.magnetic.targetY = 0;
+      });
+
+      // Click anywhere on viewport triggers shockwave + spark burst
+      window.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.portal-overlay.visible')) return;
+        spawnShockwaveBurst(e.clientX, e.clientY, state.overdrive ? 1.35 : 1.0);
+      });
+
+      /**
+       * ------------------------------------------------------------------------
+       * 10. CONTROL BAR ACTIONS: REPLAY, OVERDRIVE & HYPERJUMP TRANSITION
+       * ------------------------------------------------------------------------
+       */
+      replayBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        spawnShockwaveBurst(state.width * 0.5, state.height * 0.45, 1.25);
+        runBootSequence();
+      });
+
+      overdriveBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        state.overdrive = !state.overdrive;
+        document.body.classList.toggle('overdrive', state.overdrive);
+        overdriveBtn.classList.toggle('overdrive-active', state.overdrive);
+        overdriveBtn.setAttribute('aria-pressed', String(state.overdrive));
+
+        // Burst shockwave at center when toggling Overdrive
+        spawnShockwaveBurst(state.width * 0.5, state.height * 0.46, state.overdrive ? 1.55 : 0.9);
+      });
+
+      // Open example.com in a new tab when ENTER AUFW.COM is clicked
+      enterCtaBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.open('https://sites.google.com/stu.wvusd.org/amazing-use-of-free-will-com/page_1', '_blank', 'noopener,noreferrer');
+      });
+
+      // Return from Portal Overlay back into the Intro Stage
+      returnIntroBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        portalOverlay.classList.remove('visible');
+        state.hyperjump = false;
+        document.body.classList.remove('hyperjump');
+        runBootSequence();
+      });
+
+      window.addEventListener('resize', resizeCanvas);
+
+      // Initialize everything cleanly on load
+      function startIntroExperience() {
+        resizeCanvas();
+        runBootSequence();
+        requestAnimationFrame(animateLoop);
+      }
+
+      if (document.readyState === 'complete') {
+        startIntroExperience();
+      } else {
+        window.onload = startIntroExperience;
+      }
+    })();
+  </script>
+</body>
+</html>
